@@ -1,0 +1,101 @@
+import java.io.File
+
+private const val MIN_FRAGMENT_SIZE = 1
+private const val MAX_FRAGMENT_SIZE = 3
+private const val FOURS_PATH = "src/main/resources/fours"
+private const val FIVES_PATH = "src/main/resources/fives"
+private const val SIXES_PATH = "src/main/resources/sixes"
+private const val MIN_WORD_SIZE = 4
+private const val MAX_WORD_SIZE = 6
+
+// How many of each word fragment size is allowed.
+private val SIZE_TO_LIMIT: Map<Int, Int> = mapOf(
+    1 to 26,
+    2 to 104,
+    3 to 52
+)
+
+fun main() {
+    val allWords = getAllWords()
+
+    /*
+     * Create all valid fragments from the word list.
+     * Separate them by size.
+     * Sort each set of fragments by how frequently they appear in the word list.
+     * Keep the most frequent fragments, up to the specified limit.
+     * Print the fragment along with the stats.
+     */
+    val fragments = mutableSetOf<String>()
+    mapWordFragmentsToSize(makeWordFragments(allWords)).entries
+        .sortedBy { entry -> entry.key }
+        .forEach { entry -> entry.value
+            .sortedByDescending { it.totalCount() }
+            .take(SIZE_TO_LIMIT.getOrDefault(entry.key, 0))
+            .forEach {
+                fragments.add(it.fragment)
+                it.print()
+            }
+        }
+    println()
+
+    // Combine the fragments back into words and compare against the original word list.
+    val madeWords = makeWordsFromFragments("", fragments, allWords)
+    val wordOccurrence = mutableMapOf<String, Int>()
+    madeWords.forEach {
+        val count = wordOccurrence.getOrDefault(it, 0).inc()
+        wordOccurrence[it] = count
+    }
+    wordOccurrence.entries.sortedBy { it.key }.forEach { println("${it.key}, ${it.value}") }
+    println()
+    println("Word Count: ${wordOccurrence.size}")
+}
+
+fun makeWordsFromFragments(word: String, fragments: Set<String>, allWords: Set<String>): MutableList<String> {
+    val foundWords = mutableListOf<String>()
+    fragments.forEach {
+        val newWord = word + it
+        if (newWord.length < MIN_WORD_SIZE)  {
+            foundWords.addAll(makeWordsFromFragments(newWord, fragments, allWords))
+        } else if (newWord.length < MAX_WORD_SIZE) {
+            if (allWords.contains(newWord)) foundWords.add(newWord)
+            foundWords.addAll(makeWordsFromFragments(newWord, fragments, allWords))
+        } else {
+            if (allWords.contains(newWord)) foundWords.add(newWord)
+        }
+    }
+    return foundWords
+}
+
+fun makeWordFragments(words: Set<String>): List<WordFragment> {
+    val fragmentMap: MutableMap<String, WordFragment> = mutableMapOf()
+
+    words.forEach words@{ word ->
+        if (word.length < MIN_FRAGMENT_SIZE) return@words
+
+        for (i in MIN_FRAGMENT_SIZE until word.length) {
+            val pair = word.splitAtIndex(i)
+
+            pair.first.let { if (it.validFragment()) fragmentMap.getOrPut(it) { WordFragment(it) }.incrementLeft() }
+            pair.second.let { if (it.validFragment()) fragmentMap.getOrPut(it) { WordFragment(it) }.incrementRight() }
+        }
+    }
+
+    return fragmentMap.values.toList()
+}
+
+fun mapWordFragmentsToSize(wordFragments: List<WordFragment>): Map<Int, List<WordFragment>> {
+    val map: MutableMap<Int, MutableList<WordFragment>> = mutableMapOf()
+    wordFragments.forEach { map.getOrPut(it.length()) { mutableListOf() }.add(it) }
+    return map
+}
+
+fun getAllWords(): Set<String> = getWords(FOURS_PATH) + getWords(FIVES_PATH) + getWords(SIXES_PATH)
+
+fun getWords(path: String): Set<String> = File(path).readLines()
+    .map { it.trim().lowercase() }
+    .filter { it.isNotBlank() }
+    .toSet()
+
+fun String.validFragment() = length in MIN_FRAGMENT_SIZE..MAX_FRAGMENT_SIZE
+
+fun String.splitAtIndex(index : Int) = take(index) to substring(index)
