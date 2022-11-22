@@ -1,4 +1,5 @@
 import java.io.File
+import java.lang.System.currentTimeMillis
 
 private const val MIN_FRAGMENT_SIZE = 1
 private const val MAX_FRAGMENT_SIZE = 3
@@ -7,13 +8,16 @@ private const val FIVES_PATH = "src/main/resources/fives"
 private const val SIXES_PATH = "src/main/resources/sixes"
 private const val MIN_WORD_SIZE = 4
 private const val MAX_WORD_SIZE = 6
+private const val FRAGMENT_OUT_PREFIX = "src/main/output/fragments-"
+private const val FRAGMENT_OUT_POSTFIX = ".csv"
 
 // How many of each word fragment size is allowed.
 private val SIZE_TO_LIMIT: Map<Int, Int> = mapOf(
     1 to 26,
-    2 to 104,
-    3 to 52
+    2 to 130,
+    3 to 70
 )
+//TODO add blocklist
 
 fun main() {
     val allWords = getAllWords()
@@ -25,21 +29,24 @@ fun main() {
      * Keep the most frequent fragments, up to the specified limit.
      * Print the fragment along with the stats.
      */
-    val fragments = mutableSetOf<String>()
+    val fragments = mutableListOf<WordFragment>()
     mapWordFragmentsToSize(makeWordFragments(allWords)).entries
         .sortedBy { entry -> entry.key }
         .forEach { entry -> entry.value
             .sortedByDescending { it.totalCount() }
             .take(SIZE_TO_LIMIT.getOrDefault(entry.key, 0))
             .forEach {
-                fragments.add(it.fragment)
+                fragments.add(it)
                 it.print()
             }
         }
     println()
 
+    // Output fragment csv file
+    writeFile(fragmentFilename(), fragments)
+
     // Combine the fragments back into words and compare against the original word list.
-    val madeWords = makeWordsFromFragments("", fragments, allWords)
+    val madeWords = makeWordsFromFragments("", fragments.map { it.fragment }.toSet(), allWords)
     val wordOccurrence = mutableMapOf<String, Int>()
     madeWords.forEach {
         val count = wordOccurrence.getOrDefault(it, 0).inc()
@@ -48,8 +55,26 @@ fun main() {
     wordOccurrence.entries.sortedBy { it.key }.forEach { println("${it.key}, ${it.value}") }
     println()
     println("Word Count: ${wordOccurrence.size}")
+
+    //TODO next steps
+    // determine which fragments should go on the same card - don't appear in many words together
+    // make a set of cards (front and back, and with orientation being left or right)
+    // determine how many words can be made with the cards
 }
 
+fun fragmentFilename(): String = "$FRAGMENT_OUT_PREFIX${currentTimeMillis()}$FRAGMENT_OUT_POSTFIX"
+
+fun writeFile(filename: String, fragments: List<WordFragment>) =
+    File(filename).bufferedWriter().use { out ->
+        out.write("Fragment, Left, Right")
+        out.newLine()
+        fragments.forEach {
+            out.write(it.string())
+            out.newLine()
+        }
+    }
+
+//TODO keep track of which fragments appear frequently (or infrequently) together
 fun makeWordsFromFragments(word: String, fragments: Set<String>, allWords: Set<String>): MutableList<String> {
     val foundWords = mutableListOf<String>()
     fragments.forEach {

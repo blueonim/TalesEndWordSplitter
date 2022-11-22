@@ -7,5 +7,6 @@ class WordFragment(val fragment: String) {
     fun incrementRight() = rightCount ++
     fun totalCount() = leftCount + rightCount
 
-    fun print() = println("$fragment, $leftCount, $rightCount")
+    fun string() = "$fragment, $leftCount, $rightCount"
+    fun print() = println(string())
 }
