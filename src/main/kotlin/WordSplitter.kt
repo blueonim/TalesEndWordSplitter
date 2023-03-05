@@ -3,9 +3,6 @@ import java.lang.System.currentTimeMillis
 
 private const val MIN_FRAGMENT_SIZE = 1
 private const val MAX_FRAGMENT_SIZE = 3
-private const val FOURS_PATH = "src/main/resources/fours"
-private const val FIVES_PATH = "src/main/resources/fives"
-private const val SIXES_PATH = "src/main/resources/sixes"
 private const val MIN_WORD_SIZE = 4
 private const val MAX_WORD_SIZE = 6
 private const val FRAGMENT_OUT_PREFIX = "src/main/output/fragments-"
@@ -113,13 +110,6 @@ fun mapWordFragmentsToSize(wordFragments: List<WordFragment>): Map<Int, List<Wor
     wordFragments.forEach { map.getOrPut(it.length()) { mutableListOf() }.add(it) }
     return map
 }
-
-fun getAllWords(): Set<String> = getWords(FOURS_PATH) + getWords(FIVES_PATH) + getWords(SIXES_PATH)
-
-fun getWords(path: String): Set<String> = File(path).readLines()
-    .map { it.trim().lowercase() }
-    .filter { it.isNotBlank() }
-    .toSet()
 
 fun String.validFragment() = length in MIN_FRAGMENT_SIZE..MAX_FRAGMENT_SIZE
 
