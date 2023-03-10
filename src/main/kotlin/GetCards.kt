@@ -1,6 +1,6 @@
 import java.io.File
 
-private const val CARDS_PATH = "src/main/resources/epiloguefragments0302.csv"
+private const val CARDS_PATH = "src/main/resources/epiloguefragments.csv"
 
 fun getCards(): List<List<String>> = File(CARDS_PATH).readLines()
     .map { it.trim().lowercase() }

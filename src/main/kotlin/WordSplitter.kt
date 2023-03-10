@@ -11,8 +11,8 @@ private const val FRAGMENT_OUT_POSTFIX = ".csv"
 // How many of each word fragment size is allowed.
 private val SIZE_TO_LIMIT: Map<Int, Int> = mapOf(
     1 to 26,
-    2 to 130,
-    3 to 70
+    2 to 140,
+    3 to 80
 )
 //TODO add blocklist
 
