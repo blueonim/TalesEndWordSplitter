@@ -31,6 +31,22 @@ fun main() {
     println()
     matchedWords.forEach { println(it) }
     println(matchedWords.size)
+    println()
+
+    /*
+     * Figure out what fragments are not contributing much.
+     * Get all the fragments from all the cards.
+     * Check how many times they are contained in the matched words list.
+     * This is a naive strategy to get a rough estimate.
+     */
+    val fragmentContribution = mutableMapOf<String, Int>()
+    cards.flatten().toSet().forEach { fragment ->
+        fragmentContribution[fragment] = matchedWords.count { word -> word.contains(fragment) }
+    }
+
+    fragmentContribution.entries.sortedBy { it.value }.forEach {
+        println("${it.key}: ${it.value}")
+    }
 }
 
 /*
